@@ -5,7 +5,7 @@ A modular, client-side compatibility addon for Minecraft **1.21.1 / NeoForge 21.
 ## Current integrations
 
 - **Swivel + Spatial GUI** — hides Swivel's Orbit Camera crosshair while a 3D screen is active in Spatial GUI. The crosshair remains available during normal gameplay.
-- **Swivel + Interactic Renewed** — makes Interactic's dropped-item tooltip and right-click pickup raycast follow the Swivel orbit-camera direction. The player's original rotation is restored after the raycast.
+- **Swivel + Interactic Renewed** — makes Interactic's dropped-item tooltip and right-click pickup raycast follow the Swivel orbit-camera direction. Before sending a successful pickup request, it synchronizes that aim with the server so the item is picked up on the first click; the local player rotation is then restored.
 
 ## Target versions
 
@@ -21,7 +21,7 @@ Swivel, Interactic Renewed and Spatial GUI are optional. Install only the mods f
 
 1. Install Minecraft 1.21.1 with NeoForge 21.1.x.
 2. Install the original mods whose compatibility fixes you want to use.
-3. Put `Mod-Compat-NeoForge-1.21.1-1.0.0.jar` in the client's `mods` folder.
+3. Put `Mod-Compat-NeoForge-1.21.1-1.0.1.jar` in the client's `mods` folder.
 4. Launch the game.
 
 ## Build on Windows
@@ -39,7 +39,7 @@ On the first run, `gradlew.bat` downloads Gradle 9.2.1 into the user's `.gradle`
 The JAR is generated at:
 
 ```text
-build\libs\Mod-Compat-NeoForge-1.21.1-1.0.0.jar
+build\libs\Mod-Compat-NeoForge-1.21.1-1.0.1.jar
 ```
 
 ## Adding more compatibility fixes
@@ -74,7 +74,7 @@ MIT. See [LICENSE](LICENSE).
 ## Реализованные интеграции
 
 - **Swivel + Spatial GUI** — скрывает прицел Orbit Camera от Swivel, пока в Spatial GUI открыт 3D-интерфейс. В обычном игровом мире прицел продолжает работать.
-- **Swivel + Interactic Renewed** — заставляет подсказку выброшенного предмета и подбор правой кнопкой мыши использовать направление камеры Swivel. Исходный поворот персонажа восстанавливается после проверки.
+- **Swivel + Interactic Renewed** — заставляет подсказку выброшенного предмета и подбор правой кнопкой мыши использовать направление камеры Swivel. Перед отправкой запроса на подбор точный поворот синхронизируется с сервером, поэтому предмет подбирается с первого нажатия; локальный поворот игрока после проверки восстанавливается.
 
 ## Целевые версии
 
@@ -90,7 +90,7 @@ Swivel, Interactic Renewed и Spatial GUI — необязательные за�
 
 1. Установи Minecraft 1.21.1 с NeoForge 21.1.x.
 2. Установи исходные моды, совместимость с которыми нужна.
-3. Помести `Mod-Compat-NeoForge-1.21.1-1.0.0.jar` в папку `mods` клиента.
+3. Помести `Mod-Compat-NeoForge-1.21.1-1.0.1.jar` в папку `mods` клиента.
 4. Запусти игру.
 
 ## Сборка в Windows
@@ -108,7 +108,7 @@ Swivel, Interactic Renewed и Spatial GUI — необязательные за�
 Готовый JAR появится здесь:
 
 ```text
-build\libs\Mod-Compat-NeoForge-1.21.1-1.0.0.jar
+build\libs\Mod-Compat-NeoForge-1.21.1-1.0.1.jar
 ```
 
 ## Добавление новых исправлений совместимости
