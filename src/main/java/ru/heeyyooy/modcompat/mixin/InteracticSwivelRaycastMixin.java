@@ -58,7 +58,8 @@ public abstract class InteracticSwivelRaycastMixin {
             method = "raycastItem",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/Entity;getViewVector(F)Lnet/minecraft/world/phys/Vec3;"),
+                    target = "Lnet/minecraft/world/entity/Entity;getViewVector(F)Lnet/minecraft/world/phys/Vec3;",
+                    remap = true),
             remap = false)
     private static Vec3 modcompat$useAuthoritativeServerRotation(Entity cameraEntity, float partialTicks) {
         if (cameraEntity.level().isClientSide) {
@@ -78,7 +79,8 @@ public abstract class InteracticSwivelRaycastMixin {
             method = "raycastItem",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/Entity;pick(DFZ)Lnet/minecraft/world/phys/HitResult;"),
+                    target = "Lnet/minecraft/world/entity/Entity;pick(DFZ)Lnet/minecraft/world/phys/HitResult;",
+                    remap = true),
             remap = false)
     private static HitResult modcompat$pickBlocksAlongServerRotation(
             Entity cameraEntity, double distance, float partialTicks, boolean includeFluids) {
