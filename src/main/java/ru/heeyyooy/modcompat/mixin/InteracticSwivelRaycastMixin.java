@@ -1,6 +1,5 @@
 package ru.heeyyooy.modcompat.mixin;
 
-import com.mojang.logging.LogUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.ClipContext;
@@ -18,18 +17,11 @@ import ru.heeyyooy.modcompat.compat.SwivelAimBridge;
 @Pseudo
 @Mixin(targets = "interactic.util.Helpers", remap = false)
 public abstract class InteracticSwivelRaycastMixin {
-    private static final org.slf4j.Logger MODCOMPAT_LOGGER = LogUtils.getLogger();
     @Inject(method = "raycastItem", at = @At("HEAD"), remap = false)
     private static void swivelInteracticCompat$beginOrbitAim(
             Entity cameraEntity,
             double reach,
             CallbackInfoReturnable<ItemEntity> cir) {
-        if (!cameraEntity.level().isClientSide) {
-            MODCOMPAT_LOGGER.info("[Mod Compat] SERVER Interactic raycast started: pos={}, eye={}, yaw={}, pitch={}, look={}, rotationLook={}, reach={}.",
-                    cameraEntity.position(), cameraEntity.getEyePosition(1.0F),
-                    cameraEntity.getYRot(), cameraEntity.getXRot(),
-                    cameraEntity.getViewVector(1.0F), Vec3.directionFromRotation(cameraEntity.getXRot(), cameraEntity.getYRot()), reach);
-        }
         SwivelAimBridge.begin(cameraEntity);
     }
 
@@ -38,17 +30,9 @@ public abstract class InteracticSwivelRaycastMixin {
             Entity cameraEntity,
             double reach,
             CallbackInfoReturnable<ItemEntity> cir) {
-        if (!cameraEntity.level().isClientSide) {
-            ItemEntity result = cir.getReturnValue();
-            MODCOMPAT_LOGGER.info("[Mod Compat] SERVER Interactic raycast finished: itemFound={}, item={}, pos={}, yaw={}, pitch={}, look={}.",
-                    result != null,
-                    result == null ? "none" : result.getItem().getHoverName().getString(),
-                    result == null ? "none" : result.position(),
-                    cameraEntity.getYRot(), cameraEntity.getXRot(),
-                    cameraEntity.getViewVector(1.0F));
-        }
         SwivelAimBridge.end(cameraEntity, cir.getReturnValue());
     }
+
     /**
      * The integrated server can retain an interpolated view vector even after it has
      * accepted the rotation packet. Interactic uses getViewVector(1) for its server
@@ -66,10 +50,7 @@ public abstract class InteracticSwivelRaycastMixin {
             return cameraEntity.getViewVector(partialTicks);
         }
 
-        Vec3 direction = Vec3.directionFromRotation(cameraEntity.getXRot(), cameraEntity.getYRot());
-        MODCOMPAT_LOGGER.info("[Mod Compat] SERVER ray direction corrected from rotation: yaw={}, pitch={}, direction={}.",
-                cameraEntity.getYRot(), cameraEntity.getXRot(), direction);
-        return direction;
+        return Vec3.directionFromRotation(cameraEntity.getXRot(), cameraEntity.getYRot());
     }
 
     /**
@@ -98,5 +79,4 @@ public abstract class InteracticSwivelRaycastMixin {
                 includeFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
                 cameraEntity));
     }
-
 }
