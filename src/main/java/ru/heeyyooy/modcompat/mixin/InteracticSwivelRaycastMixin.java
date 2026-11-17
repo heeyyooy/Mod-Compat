@@ -26,6 +26,6 @@ public abstract class InteracticSwivelRaycastMixin {
             Entity cameraEntity,
             double reach,
             CallbackInfoReturnable<ItemEntity> cir) {
-        SwivelAimBridge.end(cameraEntity, cir.getReturnValue() != null);
+        SwivelAimBridge.end(cameraEntity, cir.getReturnValue());
     }
 }
