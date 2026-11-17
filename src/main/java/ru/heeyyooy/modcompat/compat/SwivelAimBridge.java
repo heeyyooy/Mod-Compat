@@ -3,6 +3,9 @@ package ru.heeyyooy.modcompat.compat;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
@@ -57,7 +60,7 @@ public final class SwivelAimBridge {
         }
     }
 
-    public static void end(Entity cameraEntity, boolean itemTargeted) {
+    public static void end(Entity cameraEntity, ItemEntity targetedItem) {
         boolean pickupAction = Boolean.TRUE.equals(PICKUP_ACTION.get());
         PICKUP_ACTION.remove();
 
@@ -69,18 +72,38 @@ public final class SwivelAimBridge {
             return;
         }
 
-        // Interactic sends an empty pickup payload and raycasts again on the server.
-        // Send the temporary Swivel aim first so the server's raycast uses the same direction.
-        if (pickupAction && itemTargeted) {
+        if (pickupAction && targetedItem != null) {
+            // Aim from the player's own eye to the exact item selected by Interactic.
+            // This removes the camera/player parallax and keeps the same direction active
+            // until Interactic has sent its server-side pickup request.
+            Vec3 delta = targetedItem.getBoundingBox().getCenter()
+                    .subtract(cameraEntity.getEyePosition(1.0F));
+            double horizontal = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
+            float yaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90.0);
+            float pitch = (float) -Math.toDegrees(Math.atan2(delta.y, horizontal));
+
+            cameraEntity.setYRot(yaw);
+            cameraEntity.setXRot(pitch);
+            cameraEntity.yRotO = yaw;
+            cameraEntity.xRotO = pitch;
+            if (cameraEntity instanceof LivingEntity livingEntity) {
+                livingEntity.setYHeadRot(yaw);
+                livingEntity.setYBodyRot(yaw);
+            }
+
             try {
                 var connection = minecraft.getConnection();
                 if (connection != null) {
                     connection.send(new ServerboundMovePlayerPacket.Rot(
-                            cameraEntity.getYRot(), cameraEntity.getXRot(), cameraEntity.onGround()));
+                            yaw, pitch, cameraEntity.onGround()));
                 }
             } catch (RuntimeException | LinkageError exception) {
-                LOGGER.warn("[Mod Compat] Could not synchronize the orbit-camera aim before Interactic's pickup request.", exception);
+                LOGGER.warn("[Mod Compat] Could not synchronize the item-target rotation before Interactic's pickup request.", exception);
             }
+
+            // Do not call Swivel's endAim here: restoring the old rotation before
+            // Interactic sends PickupPayload can make the server raycast miss the item.
+            return;
         }
 
         Method endAim = endAimMethod;
