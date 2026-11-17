@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "ru.heeyyooy.modcompat.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "InteracticSwivelRaycastMixin",
+    "SwivelSpatialGuiCrosshairMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

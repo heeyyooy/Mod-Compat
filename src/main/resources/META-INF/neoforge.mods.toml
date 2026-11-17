@@ -1,0 +1,51 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "${mod_license}"
+
+[[mods]]
+modId = "modcompat"
+version = "${version}"
+displayName = "${mod_name}"
+authors = "heeyyooy"
+description = '''
+Client-side compatibility addon for Swivel, Interactic Renewed and Spatial GUI.
+Keeps the third-person Orbit Camera crosshair off Spatial GUI screens and makes Interactic Renewed item targeting follow Swivel's orbit-camera aim.
+'''
+
+[[dependencies.modcompat]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,21.2)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.modcompat]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.21.2)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.modcompat]]
+modId = "swivel"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.modcompat]]
+modId = "interactic"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.modcompat]]
+modId = "spatial_gui"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[mixins]]
+config = "modcompat.mixins.json"
