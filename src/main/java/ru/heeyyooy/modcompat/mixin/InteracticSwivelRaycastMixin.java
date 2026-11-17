@@ -3,10 +3,14 @@ package ru.heeyyooy.modcompat.mixin;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ru.heeyyooy.modcompat.compat.SwivelAimBridge;
 
@@ -21,10 +25,10 @@ public abstract class InteracticSwivelRaycastMixin {
             double reach,
             CallbackInfoReturnable<ItemEntity> cir) {
         if (!cameraEntity.level().isClientSide) {
-            MODCOMPAT_LOGGER.info("[Mod Compat] SERVER Interactic raycast started: pos={}, eye={}, yaw={}, pitch={}, look={}, reach={}.",
+            MODCOMPAT_LOGGER.info("[Mod Compat] SERVER Interactic raycast started: pos={}, eye={}, yaw={}, pitch={}, look={}, rotationLook={}, reach={}.",
                     cameraEntity.position(), cameraEntity.getEyePosition(1.0F),
                     cameraEntity.getYRot(), cameraEntity.getXRot(),
-                    cameraEntity.getViewVector(1.0F), reach);
+                    cameraEntity.getViewVector(1.0F), Vec3.directionFromRotation(cameraEntity.getXRot(), cameraEntity.getYRot()), reach);
         }
         SwivelAimBridge.begin(cameraEntity);
     }
@@ -45,4 +49,52 @@ public abstract class InteracticSwivelRaycastMixin {
         }
         SwivelAimBridge.end(cameraEntity, cir.getReturnValue());
     }
+    /**
+     * The integrated server can retain an interpolated view vector even after it has
+     * accepted the rotation packet. Interactic uses getViewVector(1) for its server
+     * raycast, so use the authoritative rotation fields directly on the logical server.
+     */
+    @Redirect(
+            method = "raycastItem",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/entity/Entity;getViewVector(F)Lnet/minecraft/world/phys/Vec3;"),
+            remap = false)
+    private static Vec3 modcompat$useAuthoritativeServerRotation(Entity cameraEntity, float partialTicks) {
+        if (cameraEntity.level().isClientSide) {
+            return cameraEntity.getViewVector(partialTicks);
+        }
+
+        Vec3 direction = Vec3.directionFromRotation(cameraEntity.getXRot(), cameraEntity.getYRot());
+        MODCOMPAT_LOGGER.info("[Mod Compat] SERVER ray direction corrected from rotation: yaw={}, pitch={}, direction={}.",
+                cameraEntity.getYRot(), cameraEntity.getXRot(), direction);
+        return direction;
+    }
+
+    /**
+     * Keep the block-occlusion check on the exact same direction as the item raycast.
+     */
+    @Redirect(
+            method = "raycastItem",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/entity/Entity;pick(DFZ)Lnet/minecraft/world/phys/HitResult;"),
+            remap = false)
+    private static HitResult modcompat$pickBlocksAlongServerRotation(
+            Entity cameraEntity, double distance, float partialTicks, boolean includeFluids) {
+        if (cameraEntity.level().isClientSide) {
+            return cameraEntity.pick(distance, partialTicks, includeFluids);
+        }
+
+        Vec3 start = cameraEntity.getEyePosition(partialTicks);
+        Vec3 direction = Vec3.directionFromRotation(cameraEntity.getXRot(), cameraEntity.getYRot());
+        Vec3 end = start.add(direction.scale(distance));
+        return cameraEntity.level().clip(new ClipContext(
+                start,
+                end,
+                ClipContext.Block.OUTLINE,
+                includeFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
+                cameraEntity));
+    }
+
 }
