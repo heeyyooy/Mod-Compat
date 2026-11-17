@@ -4,6 +4,7 @@
   "package": "ru.heeyyooy.modcompat.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "InteracticPickupActionMixin",
     "InteracticSwivelRaycastMixin",
     "SwivelSpatialGuiCrosshairMixin"
   ],
