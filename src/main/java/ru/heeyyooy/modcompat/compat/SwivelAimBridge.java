@@ -28,9 +28,13 @@ public final class SwivelAimBridge {
 
     public static void beginPickupAction() {
         PICKUP_ACTION.set(Boolean.TRUE);
+        LOGGER.info("[Mod Compat] Interactic right-click pickup action entered.");
     }
 
     public static void endPickupAction() {
+        if (Boolean.TRUE.equals(PICKUP_ACTION.get())) {
+            LOGGER.warn("[Mod Compat] The right-click action ended without passing through Interactic.Helpers.raycastItem; check Interactic rightClickPickup configuration and Mixin loading.");
+        }
         PICKUP_ACTION.remove();
     }
 
@@ -38,7 +42,18 @@ public final class SwivelAimBridge {
         AIM_STARTED.remove();
 
         Minecraft minecraft = Minecraft.getInstance();
-        if (cameraEntity == null || cameraEntity != minecraft.player || !ModList.get().isLoaded("swivel")) {
+        boolean pickupAction = Boolean.TRUE.equals(PICKUP_ACTION.get());
+        if (cameraEntity == null || cameraEntity != minecraft.player) {
+            if (pickupAction) {
+                LOGGER.warn("[Mod Compat] Interactic raycast received a camera entity that is not the local player: {}.",
+                        cameraEntity == null ? "null" : cameraEntity.getType());
+            }
+            return;
+        }
+        if (!ModList.get().isLoaded("swivel")) {
+            if (pickupAction) {
+                LOGGER.warn("[Mod Compat] Interactic pickup action detected, but Swivel is not loaded.");
+            }
             return;
         }
 
@@ -46,13 +61,22 @@ public final class SwivelAimBridge {
         Method active = activeMethod;
         Method beginAim = beginAimMethod;
         if (active == null || beginAim == null) {
+            if (pickupAction) {
+                LOGGER.warn("[Mod Compat] Interactic pickup action detected, but Swivel's aim API is unavailable.");
+            }
             return;
         }
 
         try {
-            if (Boolean.TRUE.equals(active.invoke(null))) {
+            boolean orbitActive = Boolean.TRUE.equals(active.invoke(null));
+            if (orbitActive) {
                 beginAim.invoke(null, 1.0F);
                 AIM_STARTED.set(Boolean.TRUE);
+                if (pickupAction) {
+                    LOGGER.info("[Mod Compat] Swivel Orbit Camera aim applied for Interactic pickup raycast.");
+                }
+            } else if (pickupAction) {
+                LOGGER.warn("[Mod Compat] Interactic pickup action detected, but Swivel Orbit Camera is inactive.");
             }
         } catch (ReflectiveOperationException | LinkageError exception) {
             LOGGER.warn("[Mod Compat] Could not synchronize Interactic's item raycast with Swivel's orbit camera.", exception);
@@ -68,6 +92,10 @@ public final class SwivelAimBridge {
         AIM_STARTED.remove();
 
         Minecraft minecraft = Minecraft.getInstance();
+        if (pickupAction) {
+            LOGGER.info("[Mod Compat] Interactic pickup raycast result: itemFound={}, orbitAimApplied={}.",
+                    targetedItem != null, shouldRestore);
+        }
         if (!shouldRestore || cameraEntity != minecraft.player) {
             return;
         }
@@ -96,6 +124,11 @@ public final class SwivelAimBridge {
                 if (connection != null) {
                     connection.send(new ServerboundMovePlayerPacket.Rot(
                             yaw, pitch, cameraEntity.onGround()));
+                    LOGGER.info("[Mod Compat] Sent pickup aim for {} at {} (yaw={}, pitch={}).",
+                            targetedItem.getItem().getHoverName().getString(),
+                            targetedItem.blockPosition(), yaw, pitch);
+                } else {
+                    LOGGER.error("[Mod Compat] Could not send pickup aim: client network connection is null.");
                 }
             } catch (RuntimeException | LinkageError exception) {
                 LOGGER.warn("[Mod Compat] Could not synchronize the item-target rotation before Interactic's pickup request.", exception);
